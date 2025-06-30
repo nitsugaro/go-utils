@@ -22,7 +22,6 @@ type Response struct {
 }
 
 type ClientConfig struct {
-	BaseURL         string
 	Timeout         time.Duration
 	SkipVerifySSL   bool
 	TrustedCertPEM  []byte
@@ -34,7 +33,7 @@ type ClientConfig struct {
 
 type HttpClient struct {
 	client         *http.Client
-	baseURL        string
+	baseUrl        string
 	defaultHeaders map[string]string
 	interceptors   []Interceptor
 }
@@ -76,19 +75,26 @@ func NewHttpClient(cfg *ClientConfig) (*HttpClient, error) {
 
 	return &HttpClient{
 		client:         httpClient,
-		baseURL:        cfg.BaseURL,
 		defaultHeaders: cfg.DefaultHeaders,
 	}, nil
+}
+
+func (hc *HttpClient) SetBaseUrl(baseUrl string) {
+	hc.baseUrl = baseUrl
 }
 
 func (hc *HttpClient) AddInterceptor(i Interceptor) {
 	hc.interceptors = append(hc.interceptors, i)
 }
 
-func (hc *HttpClient) Request(method, path string, headers map[string]string, body []byte) (*Response, error) {
-	fullURL := hc.baseURL + path
+func (hc *HttpClient) Request(method, uri string, headers map[string]string, body []byte) (*Response, error) {
+	fullUri := uri
 
-	req, err := http.NewRequest(method, fullURL, bytes.NewReader(body))
+	if hc.baseUrl != "" {
+		fullUri = hc.baseUrl + uri
+	}
+
+	req, err := http.NewRequest(method, fullUri, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +126,7 @@ func (hc *HttpClient) Request(method, path string, headers map[string]string, bo
 	}
 
 	return &Response{
-		RequestUri: fullURL,
+		RequestUri: fullUri,
 		Status:     resp.StatusCode,
 		Headers:    resp.Header,
 		Body:       data,
