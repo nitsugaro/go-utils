@@ -11,13 +11,14 @@ import (
 
 func Test_http_client(t *testing.T) {
 	client, err := goutils.NewHttpClient(&goutils.ClientConfig{
-		BaseURL:         "https://httpbin.org",
-		Timeout:         5 * time.Second,
+		Timeout:         10 * time.Second,
 		FollowRedirects: true,
 		DefaultHeaders: map[string]string{
 			"my-default-header": "1234",
 		},
 	})
+
+	client.SetBaseUrl("https://httpbin.org")
 
 	client.AddInterceptor(func(req *http.Request) error {
 		req.Header.Add("x-transaction-id", "1234")
