@@ -33,6 +33,8 @@ func (d *TreeMap) Get(path string) *TreeMap {
 
 	for _, part := range parts {
 		switch val := current.(type) {
+		case map[string]interface{}:
+			current = val[part]
 		case DefaultMap:
 			current = val[part]
 		default:
@@ -217,6 +219,8 @@ func (d *TreeMap) AsMap() (DefaultMap, error) {
 		return nil, d.err
 	}
 	switch v := d.value.(type) {
+	case map[string]interface{}:
+		return d.value.(DefaultMap), nil
 	case DefaultMap:
 		return d.value.(DefaultMap), nil
 	default:
