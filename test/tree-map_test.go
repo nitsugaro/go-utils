@@ -40,6 +40,5 @@ func TestMapTree(t *testing.T) {
 		t.Errorf("expected 'sub.key.slice' be removed from map tree")
 	}
 
-	json, _ := mapTree.ToJsonString(true)
-	fmt.Println(json)
+	fmt.Println(mapTree.ToJsonString(true))
 }

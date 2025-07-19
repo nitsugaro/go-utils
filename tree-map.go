@@ -153,17 +153,19 @@ func (d *TreeMap) AsString() (string, error) {
 	}
 }
 
-func (d *TreeMap) AsInt() (int, error) {
+func (d *TreeMap) AsInt() (int64, error) {
 	if d.err != nil {
 		return 0, d.err
 	}
 	switch v := d.value.(type) {
 	case float64:
-		return int(v), nil
+		return int64(v), nil
 	case int:
+		return int64(v), nil
+	case int64:
 		return v, nil
 	case string:
-		return strconv.Atoi(v)
+		return strconv.ParseInt(v, 10, 64)
 	default:
 		return 0, fmt.Errorf("cannot convert to int: %T", v)
 	}
@@ -177,6 +179,8 @@ func (d *TreeMap) AsFloat() (float64, error) {
 	case float64:
 		return v, nil
 	case int:
+		return float64(v), nil
+	case int64:
 		return float64(v), nil
 	case string:
 		return strconv.ParseFloat(v, 64)
@@ -223,6 +227,13 @@ func (d *TreeMap) AsMap() (DefaultMap, error) {
 		return d.value.(DefaultMap), nil
 	case DefaultMap:
 		return d.value.(DefaultMap), nil
+	case interface{}:
+		val, ok := d.value.(DefaultMap)
+		if ok {
+			return val, nil
+		}
+
+		return nil, fmt.Errorf("cannot convert to map: %T", v)
 	default:
 		return nil, fmt.Errorf("cannot convert to map: %T", v)
 	}
@@ -251,21 +262,24 @@ func (d *TreeMap) AsStruct(target interface{}) error {
 	return json.Unmarshal(bytes, target)
 }
 
-func (d *TreeMap) ToJsonString(pretty bool) (string, error) {
+func (d *TreeMap) ToJsonString(pretty bool) string {
 	if d.err != nil {
-		return "", d.err
+		return "{}"
 	}
+
 	if pretty {
 		bytes, err := json.MarshalIndent(d.value, "", "  ")
 		if err != nil {
-			return "", err
+			d.err = err
+			return "{}"
 		}
-		return string(bytes), nil
+		return string(bytes)
 	} else {
 		bytes, err := json.Marshal(d.value)
 		if err != nil {
-			return "", err
+			d.err = err
+			return "{}"
 		}
-		return string(bytes), nil
+		return string(bytes)
 	}
 }
