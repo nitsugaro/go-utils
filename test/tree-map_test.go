@@ -44,6 +44,8 @@ func TestMapTree(t *testing.T) {
 
 	fmt.Println(mapTree.ToJsonString(true))
 
-	fmt.Println(mapTree.Get("unreference_key").Or("another_key").AsStringOr("nothing"))
+	mapTree.Set("another_key", "what")
+
+	fmt.Println(mapTree.Get("unreference_key").Or("another_key").AsString())
 	fmt.Println(mapTree.Get("unreference_key").IsEmpty())
 }

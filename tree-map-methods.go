@@ -34,12 +34,15 @@ func (d *TreeMap) Get(path string) *TreeMap {
 		}
 	}
 
-	return &TreeMap{value: current}
+	return &TreeMap{value: current, root: d.root}
 }
 
 func (d *TreeMap) Or(path string) *TreeMap {
 	if d.err != nil || d.value == nil {
-		return d.Get(path)
+		if d.root != nil {
+			return d.root.Get(path)
+		}
+		return d
 	}
 	return d
 }

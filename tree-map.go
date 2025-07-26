@@ -9,15 +9,19 @@ type DefaultMap = map[string]interface{}
 // ------------------- Core Struct -------------------
 type TreeMap struct {
 	value interface{}
+	root  *TreeMap
 	err   error
 }
 
 // ------------------- Constructors -------------------
 func NewTreeMap(data ...interface{}) *TreeMap {
-	if len(data) != 0 && data[0] != nil {
-		return &TreeMap{value: data[0]}
+	var val interface{} = DefaultMap{}
+	if len(data) > 0 && data[0] != nil {
+		val = data[0]
 	}
-	return &TreeMap{value: DefaultMap{}}
+	root := &TreeMap{value: val}
+	root.root = root
+	return root
 }
 
 func (d *TreeMap) ToJsonString(pretty bool) string {
