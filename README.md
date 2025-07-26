@@ -3,7 +3,7 @@
 There was a time where devs wanted to make things easy (Go), but there are other ways to make things easy.
 
 ```bash
-go get github.com/nitsugaro/go-utils@latest
+go get github.com/nitsugaro/go-utils@v1.3.0
 ```
 
 ### Map Tree
@@ -17,58 +17,41 @@ Use Cases
 - Runtimes like JS
 
 ```go
-tree := goutils.NewTreeMap(map[string]interface{}{ "initial": "my-value" })
+data := goutils.DefaultMap{
+		"user": goutils.DefaultMap{
+			"name":  "Alice",
+			"age":   28,
+			"email": "alice@example.com",
+			"roles": []interface{}{"admin", "editor", "viewer"},
+		},
+	}
 
-tree.Get("initial").AsString()          // "my-value", nil
+	// Create a TreeMap
+	tree := goutils.NewTreeMap(data)
 
-tree.Set("sub.key", goutils.DefaultMap{ "slice": []interface{}{1, 2, 3} })
+	// --- Basic Get & Value Access ---
+	fmt.Println("Name:", tree.Get("user.name").AsStringOr("Unknown"))
+	fmt.Println("Age:", tree.Get("user.age").AsIntOr(-1))
+	fmt.Println("Email:", tree.Get("user.email").AsStringOr("no email"))
 
-tree.IsDefined("sub.key")               // true
+	// --- Check Existence ---
+	if tree.IsDefined("user.name") {
+		fmt.Println("Name is defined.")
+	}
+	if !tree.Get("user.password").Exists() {
+		fmt.Println("Password not found.")
+	}
+	if tree.Get("user.undefined").IsEmpty() {
+		fmt.Println("Field is nil.")
+	}
 
-tree.Get("sub.key").AsMap()             // goutils.DefaultMap{ "slice": [...] }, nil
+	// --- Set Value ---
+	tree.Set("user.country", "Argentina")
+	fmt.Println("Country:", tree.Get("user.country").AsStringOr("No country"))
 
-tree.Get("sub.key.slice.0").AsInt()     // 1, nil
-
-tree.Get("sub.key.slice").AsSlice()     // []*TreeMap{1, 2, 3}, nil
-
-tree.ToJsonString(true)
-// {
-//   "initial": "my-value",
-//   "sub": {
-//     "key": {
-//       "slice": [
-//         1,
-//         2,
-//         3
-//       ]
-//     }
-//   }
-// }
-
-// AsSliceOf
-type MyStruct struct {
-	Name string
-}
-tree.Set("users", []interface{}{
-	goutils.DefaultMap{"Name": "Agus"},
-})
-var users []MyStruct
-tree.Get("users").AsSliceOf(&users) // []MyStruct{{"Agus"}}, nil
-
-// AsStruct
-tree.Set("config", goutils.DefaultMap{"Name": "TreeMap"})
-var cfg MyStruct
-tree.Get("config").AsStruct(&cfg) // MyStruct{"TreeMap"}, nil
-
-// AsInt / AsFloat / AsBool
-tree.Set("num", 42)
-tree.Get("num").AsInt()   // 42, nil
-tree.Get("num").AsFloat() // 42.0, nil
-
-tree.Set("flag", "true")
-tree.Get("flag").AsBool() // true, nil
-
-mapTree.Delete("sub.key.slice") // *TreeMap{...}, nil
+	// --- Delete Field ---
+	tree.Delete("user.email")
+	fmt.Println("Email after delete:", tree.Get("user.email").AsStringOr("Deleted"))
 ```
 
 ### Http Client

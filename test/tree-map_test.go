@@ -18,7 +18,7 @@ func TestMapTree(t *testing.T) {
 		t.Errorf("expected 'initial' value be 'my-value' and got: %s", value)
 	}
 
-	mapTree.Set("sub.key", goutils.DefaultMap{"slice": []interface{}{1, 2, 3}})
+	fmt.Println(mapTree.Set("sub.key", goutils.DefaultMap{"slice": []interface{}{1, 2, 3}}))
 	if !mapTree.IsDefined("sub.key") {
 		t.Errorf("expected 'sub.key' be defined")
 	}
@@ -35,10 +35,15 @@ func TestMapTree(t *testing.T) {
 		t.Errorf("expected len of 'sub.key.slice' be 3 and got: %v", items)
 	}
 
+	fmt.Println(mapTree.AsMap())
+
 	mapTree.Delete("sub.key.slice")
 	if mapTree.IsDefined("sub.key.slice") {
 		t.Errorf("expected 'sub.key.slice' be removed from map tree")
 	}
 
 	fmt.Println(mapTree.ToJsonString(true))
+
+	fmt.Println(mapTree.Get("unreference_key").Or("another_key").AsStringOr("nothing"))
+	fmt.Println(mapTree.Get("unreference_key").IsEmpty())
 }
