@@ -3,7 +3,7 @@
 There was a time where devs wanted to make things easy (Go), but there are other ways to make things easy.
 
 ```bash
-go get github.com/nitsugaro/go-utils@v1.3.1
+go get github.com/nitsugaro/go-utils@v1.4.0
 ```
 
 ### Map Tree
