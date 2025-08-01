@@ -1,6 +1,7 @@
 package encoding
 
 import (
+	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
 )
@@ -27,4 +28,20 @@ func EncodeHex(data []byte) string {
 
 func DecodeHex(s string) ([]byte, error) {
 	return hex.DecodeString(s)
+}
+
+func EncodeBase32(data []byte) string {
+	return base32.StdEncoding.EncodeToString(data)
+}
+
+func DecodeBase32(s string) ([]byte, error) {
+	return base32.StdEncoding.DecodeString(s)
+}
+
+func EncodeBase32NoPadding(data []byte) string {
+	return base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(data)
+}
+
+func DecodeBase32NoPadding(s string) ([]byte, error) {
+	return base32.StdEncoding.WithPadding(base32.NoPadding).DecodeString(s)
 }

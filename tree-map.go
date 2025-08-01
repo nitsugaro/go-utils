@@ -4,18 +4,18 @@ import (
 	"encoding/json"
 )
 
-type DefaultMap = map[string]interface{}
+type DefaultMap = map[string]any
 
 // ------------------- Core Struct -------------------
 type TreeMap struct {
-	value interface{}
+	value any
 	root  *TreeMap
 	err   error
 }
 
 // ------------------- Constructors -------------------
-func NewTreeMap(data ...interface{}) *TreeMap {
-	var val interface{} = DefaultMap{}
+func NewTreeMap(data ...any) *TreeMap {
+	var val any = DefaultMap{}
 	if len(data) > 0 && data[0] != nil {
 		val = data[0]
 	}

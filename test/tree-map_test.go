@@ -42,10 +42,16 @@ func TestMapTree(t *testing.T) {
 		t.Errorf("expected 'sub.key.slice' be removed from map tree")
 	}
 
+	mapTree.Set("sub.key.another_key", "what")
+
 	fmt.Println(mapTree.ToJsonString(true))
 
-	mapTree.Set("another_key", "what")
-
-	fmt.Println(mapTree.Get("unreference_key").Or("another_key").AsString())
+	fmt.Println(mapTree.Get("unreference_key").Or("sub.key.another_key").AsString())
 	fmt.Println(mapTree.Get("unreference_key").IsEmpty())
+
+	fmt.Println(mapTree.Delete("sub.key").Get("another_key").AsString())
+
+	fmt.Println(mapTree.ToJsonString(true))
+
+	fmt.Println(mapTree.TryDelete("sub").ToJsonString(true))
 }

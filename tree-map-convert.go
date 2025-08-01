@@ -73,7 +73,7 @@ func (d *TreeMap) AsBool() (bool, error) {
 	}
 }
 
-func (d *TreeMap) AsInterface() (interface{}, error) {
+func (d *TreeMap) AsAny() (any, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
@@ -85,7 +85,7 @@ func (d *TreeMap) AsSlice() ([]*TreeMap, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
-	arr, ok := d.value.([]interface{})
+	arr, ok := d.value.([]any)
 	if !ok {
 		return nil, fmt.Errorf("not a slice")
 	}
@@ -108,7 +108,7 @@ func (d *TreeMap) AsMap() (DefaultMap, error) {
 	return nil, fmt.Errorf("cannot convert to map: %T", d.value)
 }
 
-func (d *TreeMap) AsSliceOf(target interface{}) error {
+func (d *TreeMap) AsSliceOf(target []any) error {
 	if d.err != nil {
 		return d.err
 	}
@@ -116,10 +116,10 @@ func (d *TreeMap) AsSliceOf(target interface{}) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(data, target)
+	return json.Unmarshal(data, &target)
 }
 
-func (d *TreeMap) AsStruct(target interface{}) error {
+func (d *TreeMap) AsStruct(target any) error {
 	if d.err != nil {
 		return d.err
 	}
@@ -159,8 +159,8 @@ func (d *TreeMap) AsBoolOr(def bool) bool {
 	}
 	return b
 }
-func (d *TreeMap) AsInterfaceOr(def interface{}) interface{} {
-	v, err := d.AsInterface()
+func (d *TreeMap) AsAnyOr(def any) any {
+	v, err := d.AsAny()
 	if err != nil {
 		return def
 	}

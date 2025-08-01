@@ -47,7 +47,7 @@ func (d *TreeMap) Or(path string) *TreeMap {
 	return d
 }
 
-func (d *TreeMap) Set(path string, value interface{}) *TreeMap {
+func (d *TreeMap) Set(path string, value any) *TreeMap {
 	if d.err != nil {
 		return d
 	}
@@ -82,6 +82,7 @@ func (d *TreeMap) Set(path string, value interface{}) *TreeMap {
 	return d
 }
 
+// delete path key and returns a new treemap with from path value
 func (d *TreeMap) Delete(path string) *TreeMap {
 	if d.err != nil {
 		return d
@@ -98,12 +99,13 @@ func (d *TreeMap) Delete(path string) *TreeMap {
 
 	for i, part := range parts {
 		if i == last {
+			val := current[part]
 			delete(current, part)
-			return d
+			return &TreeMap{value: val}
 		}
 		next, ok := current[part]
 		if !ok {
-			return d
+			return &TreeMap{err: fmt.Errorf("not found key '%s'", part)}
 		}
 		nestedMap, ok := next.(DefaultMap)
 		if !ok {
@@ -111,6 +113,17 @@ func (d *TreeMap) Delete(path string) *TreeMap {
 		}
 		current = nestedMap
 	}
+	return &TreeMap{err: fmt.Errorf("cannot delete path '%s'", path)}
+}
+
+// delete path key and returns the root treemap
+func (d *TreeMap) TryDelete(path string) *TreeMap {
+	if d.err != nil {
+		return d
+	}
+
+	d.Delete(path)
+
 	return d
 }
 

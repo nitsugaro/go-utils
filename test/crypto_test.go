@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/nitsugaro/go-utils/cipher"
@@ -44,5 +45,21 @@ func TestCryptoFunctions(t *testing.T) {
 
 	if encoding.EncodeHex(plainText1) != encoding.EncodeHex(plainText2) {
 		t.Errorf("wrong decryption AES-CBC")
+	}
+
+	//BCRYPT
+	hashBcrypt, _ := crypto.BcryptHash("password", 10)
+	fmt.Println("hash: " + hashBcrypt)
+
+	if !crypto.VerifyBcryptHash("password", hashBcrypt) {
+		t.Errorf("expected hash %s be true for 'password'", hashBcrypt)
+	}
+
+	//PBKDF2
+	hashPbkdf2, _ := crypto.Pbkdf2Hash(&crypto.Pbkdf2{Password: "password", Alg: crypto.SHA256})
+	fmt.Println("hash: " + hashPbkdf2)
+
+	if !crypto.VerifyPbkdf2Hash("password", hashPbkdf2) {
+		t.Errorf("expected hash %s be true for 'password'", hashPbkdf2)
 	}
 }
