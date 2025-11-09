@@ -3,6 +3,8 @@ package goutils
 type TreeMapImpl interface {
 	Get(path string) TreeMapImpl
 	IsDefined(path string) bool
+	Exists() bool
+	IsEmpty() bool
 	Or(path string) TreeMapImpl
 	Set(path string, value any) TreeMapImpl
 	Delete(path string) TreeMapImpl

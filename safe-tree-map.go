@@ -27,6 +27,18 @@ func (s *SafeTreeMap) IsDefined(path string) bool {
 	return s.tm.IsDefined(path)
 }
 
+func (s *SafeTreeMap) Exists() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tm.Exists()
+}
+
+func (s *SafeTreeMap) IsEmpty() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tm.IsEmpty()
+}
+
 func (s *SafeTreeMap) Or(path string) TreeMapImpl {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
