@@ -2,6 +2,7 @@ package goutils
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -41,7 +42,6 @@ type HttpClient struct {
 func NewHttpClient(cfg *ClientConfig) (*HttpClient, error) {
 	tlsCfg := &tls.Config{InsecureSkipVerify: cfg.SkipVerifySSL}
 
-	// Trusted Cert
 	if len(cfg.TrustedCertPEM) > 0 {
 		certPool := x509.NewCertPool()
 		if !certPool.AppendCertsFromPEM(cfg.TrustedCertPEM) {
@@ -51,7 +51,6 @@ func NewHttpClient(cfg *ClientConfig) (*HttpClient, error) {
 		tlsCfg.RootCAs = certPool
 	}
 
-	// mTLS
 	if len(cfg.ClientCertPEM) > 0 && len(cfg.ClientKeyPEM) > 0 {
 		cert, err := tls.X509KeyPair(cfg.ClientCertPEM, cfg.ClientKeyPEM)
 		if err != nil {
@@ -61,20 +60,16 @@ func NewHttpClient(cfg *ClientConfig) (*HttpClient, error) {
 	}
 
 	transport := &http.Transport{TLSClientConfig: tlsCfg}
-
-	httpClient := &http.Client{
-		Timeout:   cfg.Timeout,
-		Transport: transport,
-	}
+	client := &http.Client{Transport: transport, Timeout: cfg.Timeout}
 
 	if !cfg.FollowRedirects {
-		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		}
 	}
 
 	return &HttpClient{
-		client:         httpClient,
+		client:         client,
 		defaultHeaders: cfg.DefaultHeaders,
 	}, nil
 }
@@ -88,13 +83,20 @@ func (hc *HttpClient) AddInterceptor(i Interceptor) {
 }
 
 func (hc *HttpClient) Request(method, uri string, headers map[string]string, body []byte) (*Response, error) {
-	fullUri := uri
+	return hc.doRequest(context.Background(), method, uri, headers, body)
+}
 
+func (hc *HttpClient) RequestWithContext(ctx context.Context, method, uri string, headers map[string]string, body []byte) (*Response, error) {
+	return hc.doRequest(ctx, method, uri, headers, body)
+}
+
+func (hc *HttpClient) doRequest(ctx context.Context, method, uri string, headers map[string]string, body []byte) (*Response, error) {
+	fullUri := uri
 	if hc.baseUrl != "" {
 		fullUri = hc.baseUrl + uri
 	}
 
-	req, err := http.NewRequest(method, fullUri, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, method, fullUri, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}

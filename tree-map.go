@@ -6,7 +6,6 @@ import (
 
 type DefaultMap = map[string]any
 
-// ------------------- Core Struct -------------------
 type TreeMap struct {
 	value any
 	root  *TreeMap
@@ -15,10 +14,12 @@ type TreeMap struct {
 
 // ------------------- Constructors -------------------
 func NewTreeMap(data ...any) *TreeMap {
-	var val any = DefaultMap{}
+	var val any = make(map[string]any)
+
 	if len(data) > 0 && data[0] != nil {
-		val = data[0]
+		val = normalizeToDefault(data[0])
 	}
+
 	root := &TreeMap{value: val}
 	root.root = root
 	return root

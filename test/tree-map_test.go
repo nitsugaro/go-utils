@@ -2,56 +2,151 @@ package test
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 
 	goutils "github.com/nitsugaro/go-utils"
 )
 
-func TestMapTree(t *testing.T) {
+// ------------------- TreeMap Core Tests -------------------
+
+func TestTreeMap_BasicUsage(t *testing.T) {
 	root := map[string]interface{}{
 		"initial": "my-value",
 	}
-
 	mapTree := goutils.NewTreeMap(root)
 
-	if value, err := mapTree.Get("initial").AsString(); err != nil || value != "my-value" {
-		t.Errorf("expected 'initial' value be 'my-value' and got: %s", value)
+	mapTree.Set("array", []any{"1", "1"})
+	if got := mapTree.Get("array.0").AsStringOr(""); got != "1" {
+		t.Errorf("expected array[0]='1', got %v", got)
 	}
 
-	fmt.Println(mapTree.Set("sub.key", goutils.DefaultMap{"slice": []interface{}{1, 2, 3}}))
-	if !mapTree.IsDefined("sub.key") {
-		t.Errorf("expected 'sub.key' be defined")
+	copy := mapTree.Clone()
+	copy.Set("obj", map[string]string{"x": "2"})
+	if mapTree.IsDefined("obj.x") {
+		t.Errorf("clone must not affect original map")
 	}
 
-	if mapSubKey, err := mapTree.Get("sub.key").AsMap(); err != nil || mapSubKey["slice"] == nil {
-		t.Errorf("expected 'sub.key' be an object with a slice and got: %v", mapSubKey)
+	if v, _ := copy.Get("obj.x").AsString(); v != "2" {
+		t.Errorf("expected obj.x='2', got %v", v)
 	}
 
-	if item, err := mapTree.Get("sub.key.slice.0").AsInt(); err != nil || item != 1 {
-		t.Errorf("expected 'sub.key.slice.0' be 1 and got: %v", item)
+	mapTree.Set("sub.key.slice", []any{1, 2, 3})
+	if !mapTree.IsDefined("sub.key.slice.2") {
+		t.Errorf("expected sub.key.slice.2 to exist")
 	}
-
-	if items, err := mapTree.Get("sub.key.slice").AsSlice(); err != nil || len(items) != 3 {
-		t.Errorf("expected len of 'sub.key.slice' be 3 and got: %v", items)
-	}
-
-	fmt.Println(mapTree.AsMap())
-
 	mapTree.Delete("sub.key.slice")
 	if mapTree.IsDefined("sub.key.slice") {
-		t.Errorf("expected 'sub.key.slice' be removed from map tree")
+		t.Errorf("expected sub.key.slice to be deleted")
 	}
 
 	mapTree.Set("sub.key.another_key", "what")
+	v := mapTree.Get("unreference_key").Or("sub.key.another_key").AsStringOr("")
+	if v != "what" {
+		t.Errorf("expected Or fallback to return 'what', got %v", v)
+	}
 
-	fmt.Println(mapTree.ToJsonString(true))
+	mapTree.TryDelete("sub")
+	if mapTree.IsDefined("sub") {
+		t.Errorf("expected 'sub' to be deleted")
+	}
+}
 
-	fmt.Println(mapTree.Get("unreference_key").Or("sub.key.another_key").AsString())
-	fmt.Println(mapTree.Get("unreference_key").IsEmpty())
+// ------------------- Value Conversion Tests -------------------
 
-	fmt.Println(mapTree.Delete("sub.key").Get("another_key").AsString())
+func TestTreeMap_Conversions(t *testing.T) {
+	m := goutils.NewTreeMap()
+	m.Set("nums", []any{1, "2", 3.0})
+	m.Set("bools", []any{"true", false})
+	m.Set("str", "10")
 
-	fmt.Println(mapTree.ToJsonString(true))
+	// slices
+	if ints := m.Get("nums").AsIntSlice(); len(ints) != 3 || ints[1] != 2 {
+		t.Errorf("expected ints [1 2 3], got %v", ints)
+	}
 
-	fmt.Println(mapTree.TryDelete("sub").ToJsonString(true))
+	if bools := m.Get("bools").AsBoolSlice(); len(bools) != 2 || !bools[0] {
+		t.Errorf("expected bools [true false], got %v", bools)
+	}
+
+	if s, _ := m.Get("str").AsInt(); s != 10 {
+		t.Errorf("expected str parsed as 10, got %v", s)
+	}
+}
+
+// ------------------- Clone & DeepClone Tests -------------------
+
+func TestTreeMap_CloneIsolation(t *testing.T) {
+	m := goutils.NewTreeMap(map[string]any{"x": []any{1, 2}})
+	clone := m.Clone()
+	clone.Set("x.1", 99)
+
+	if m.Get("x.1").AsIntOr(0) == 99 {
+		t.Errorf("clone modifications must not affect original")
+	}
+}
+
+// ------------------- SafeTreeMap Race & Stress Tests -------------------
+
+func TestSafeTreeMapRace(t *testing.T) {
+	safe := goutils.NewSyncTreeMap()
+	safe.Set("user", map[string]any{"name": "Agus", "age": 27})
+
+	done := make(chan bool)
+	for i := 0; i < 100; i++ {
+		go func(id int) {
+			if id%2 == 0 {
+				safe.Get("user").Set(fmt.Sprintf("role-%d", id), id)
+			} else {
+				_ = safe.Get("user.name").AsStringOr("")
+			}
+			done <- true
+		}(i)
+	}
+	for i := 0; i < 100; i++ {
+		<-done
+	}
+}
+
+// ------------------- SafeTreeMap Extended Stress -------------------
+
+func TestSafeTreeMap_ExtendedStress(t *testing.T) {
+	safe := goutils.NewSyncTreeMap()
+	safe.Set("root", map[string]any{"list": []any{1, 2, 3}, "active": true})
+
+	wg := sync.WaitGroup{}
+	for i := 0; i < 200; i++ {
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			if id%4 == 0 {
+				safe.Get("root").Set(fmt.Sprintf("k%d", id), id)
+			} else if id%4 == 1 {
+				_ = safe.Get("root.list").AsIntSlice()
+			} else if id%4 == 2 {
+				_ = safe.Get("root.active").AsBoolOr(false)
+			} else {
+				_ = safe.Clone().ToJsonString(false)
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	if !safe.Get("root.active").AsBoolOr(false) {
+		t.Errorf("expected root.active to remain true after concurrent ops")
+	}
+}
+
+// ------------------- SafeTreeMap Snapshot Clone -------------------
+
+func TestSafeTreeMap_CloneIsolation(t *testing.T) {
+	safe := goutils.NewSyncTreeMap()
+	safe.Set("ctx", map[string]any{"x": 1, "y": 2})
+
+	clone := safe.Clone()
+	clone.Set("ctx.x", 999)
+
+	if safe.Get("ctx.x").AsIntOr(0) == 999 {
+		t.Errorf("clone modifications must not affect original SafeTreeMap")
+	}
 }
