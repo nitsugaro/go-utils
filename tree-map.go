@@ -8,12 +8,12 @@ type DefaultMap = map[string]any
 
 type TreeMap struct {
 	value any
-	root  *TreeMap
+	root  TreeMapImpl
 	err   error
 }
 
 // ------------------- Constructors -------------------
-func NewTreeMap(data ...any) *TreeMap {
+func NewTreeMap(data ...any) TreeMapImpl {
 	var val any = make(map[string]any)
 
 	if len(data) > 0 && data[0] != nil {
@@ -23,6 +23,18 @@ func NewTreeMap(data ...any) *TreeMap {
 	root := &TreeMap{value: val}
 	root.root = root
 	return root
+}
+
+func (d *TreeMap) getValue() any {
+	return d.value
+}
+
+func (d *TreeMap) getError() error {
+	return d.err
+}
+
+func (d *TreeMap) getRoot() TreeMapImpl {
+	return d.root
 }
 
 func (d *TreeMap) ToJsonString(pretty bool) string {

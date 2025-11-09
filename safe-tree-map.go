@@ -6,42 +6,54 @@ import (
 
 type SafeTreeMap struct {
 	mu *sync.RWMutex
-	tm *TreeMap
+	tm TreeMapImpl
 }
 
-func NewSyncTreeMap(data ...any) *SafeTreeMap {
+func NewSyncTreeMap(data ...any) TreeMapImpl {
 	mu := &sync.RWMutex{}
 	return &SafeTreeMap{mu: mu, tm: NewTreeMap(data...)}
 }
 
 // ------------------- Core -------------------
-func (s *SafeTreeMap) Get(path string) *SafeTreeMap {
+func (s *SafeTreeMap) Get(path string) TreeMapImpl {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return &SafeTreeMap{mu: s.mu, tm: s.tm.Get(path)}
 }
 
-func (s *SafeTreeMap) Set(path string, value any) *SafeTreeMap {
+func (s *SafeTreeMap) IsDefined(path string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tm.IsDefined(path)
+}
+
+func (s *SafeTreeMap) Or(path string) TreeMapImpl {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tm.Or(path)
+}
+
+func (s *SafeTreeMap) Set(path string, value any) TreeMapImpl {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.tm.Set(path, value)
 	return s
 }
 
-func (s *SafeTreeMap) Delete(path string) *TreeMap {
+func (s *SafeTreeMap) Delete(path string) TreeMapImpl {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.tm.Delete(path)
 }
 
-func (s *SafeTreeMap) TryDelete(path string) *SafeTreeMap {
+func (s *SafeTreeMap) TryDelete(path string) TreeMapImpl {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.tm.TryDelete(path)
 	return s
 }
 
-func (s *SafeTreeMap) Clone() *SafeTreeMap {
+func (s *SafeTreeMap) Clone() TreeMapImpl {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return &SafeTreeMap{mu: &sync.RWMutex{}, tm: s.tm.Clone()}
@@ -59,7 +71,7 @@ func (s *SafeTreeMap) AsMap() (DefaultMap, error) {
 	return s.tm.AsMap()
 }
 
-func (s *SafeTreeMap) AsSlice() ([]*TreeMap, error) {
+func (s *SafeTreeMap) AsSlice() ([]TreeMapImpl, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.tm.AsSlice()
@@ -163,4 +175,22 @@ func (s *SafeTreeMap) AsAnySlice() []any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.tm.AsAnySlice()
+}
+
+func (s *SafeTreeMap) getValue() any {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tm.getValue()
+}
+
+func (s *SafeTreeMap) getError() error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tm.getError()
+}
+
+func (s *SafeTreeMap) getRoot() TreeMapImpl {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.tm.getRoot()
 }

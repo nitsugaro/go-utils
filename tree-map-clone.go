@@ -2,7 +2,7 @@ package goutils
 
 import "reflect"
 
-func (d *TreeMap) Clone() *TreeMap {
+func (d *TreeMap) Clone() TreeMapImpl {
 	if d.err != nil {
 		return &TreeMap{err: d.err}
 	}
@@ -41,7 +41,6 @@ func deepClone(v any) any {
 		val.Elem().Set(reflect.ValueOf(deepClone(rv.Elem().Interface())))
 		return val.Interface()
 	default:
-		// copia directa de valores básicos (int, string, bool, etc.)
 		return v
 	}
 }

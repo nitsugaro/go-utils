@@ -10,7 +10,7 @@ import (
 // ------------------- Get / Set / Delete -------------------
 
 // ------------------- Get -------------------
-func (d *TreeMap) Get(path string) *TreeMap {
+func (d *TreeMap) Get(path string) TreeMapImpl {
 	if d.err != nil || d.value == nil {
 		return d
 	}
@@ -59,7 +59,7 @@ func (d *TreeMap) Get(path string) *TreeMap {
 }
 
 // ------------------- Set -------------------
-func (d *TreeMap) Set(path string, value any) *TreeMap {
+func (d *TreeMap) Set(path string, value any) TreeMapImpl {
 	if d.err != nil {
 		return d
 	}
@@ -102,7 +102,7 @@ func (d *TreeMap) Set(path string, value any) *TreeMap {
 	return d
 }
 
-func (d *TreeMap) Or(path string) *TreeMap {
+func (d *TreeMap) Or(path string) TreeMapImpl {
 	if d.err != nil || d.value == nil {
 		if d.root != nil {
 			return d.root.Get(path)
@@ -113,7 +113,7 @@ func (d *TreeMap) Or(path string) *TreeMap {
 }
 
 // delete path key and returns a new treemap with from path value
-func (d *TreeMap) Delete(path string) *TreeMap {
+func (d *TreeMap) Delete(path string) TreeMapImpl {
 	if d.err != nil {
 		return d
 	}
@@ -147,7 +147,7 @@ func (d *TreeMap) Delete(path string) *TreeMap {
 }
 
 // delete path key and returns the root treemap
-func (d *TreeMap) TryDelete(path string) *TreeMap {
+func (d *TreeMap) TryDelete(path string) TreeMapImpl {
 	if d.err != nil {
 		return d
 	}
@@ -160,7 +160,7 @@ func (d *TreeMap) TryDelete(path string) *TreeMap {
 // ------------------- Status -------------------
 func (d *TreeMap) IsDefined(path string) bool {
 	v := d.Get(path)
-	return v.err == nil && v.value != nil
+	return v.getError() == nil && v.getValue() != nil
 }
 
 func (d *TreeMap) Exists() bool {

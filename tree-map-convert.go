@@ -149,7 +149,7 @@ func (d *TreeMap) AsMap() (DefaultMap, error) {
 	return nil, fmt.Errorf("cannot convert to map: %T", d.value)
 }
 
-func (d *TreeMap) AsSlice() ([]*TreeMap, error) {
+func (d *TreeMap) AsSlice() ([]TreeMapImpl, error) {
 	if d.err != nil {
 		return nil, d.err
 	}
@@ -159,7 +159,7 @@ func (d *TreeMap) AsSlice() ([]*TreeMap, error) {
 		return nil, fmt.Errorf("not a slice: %T", d.value)
 	}
 
-	var result []*TreeMap
+	var result []TreeMapImpl
 	for i := range rv.Len() {
 		result = append(result, &TreeMap{value: rv.Index(i).Interface(), root: d.root})
 	}
